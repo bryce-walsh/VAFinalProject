@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3-array.v1.min.js"></script>
+<script src="https://d3js.org/d3-geo.v1.min.js"></script>
+<script>
+	var projection = d3.geo.mercator()
+	  .scale(100000)
+	  // Center the Map in Colombia
+	  .center([-119.85, .1])
+	  .translate([960 / 2, 500 / 2]);
+
+	var path = d3.geo.path()
+	  .projection(projection);
+	var final = new Array
+	var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
+		var features = mapData.features;
+		d3.csv("combined_10min.csv", function(data) {
+		    for (var i = 0; i < data.length; i++) {
+		    	time = data[i]["Timestamp"]
+		    	final.push({[time] : new Array})
+		    	for (var j = 0; j < features.length; j++) {
+		    		let sum = 0
+		    		let count = 0
+		    		let bounds = path.bounds(features[j].geometry)
+		    		for (var k = 1; k < 60; k++){
+		    			point = path.centroid({
+		    						"type": "Feature",
+							  		"geometry": {
+							    		"type": "Point",
+							    		"coordinates": [data[i]["Long_"+ k], data[i]["Lat_"+ k]]
+							  		}
+								})
+		    			if ((bounds[0][1] - 20) < point[1] && (bounds[1][1] + 20) > point[1] &&
+		    				(bounds[0][0] - 20) < point[0] && (bounds[1][0] + 20) > point[0]) {
+		    				sum += parseFloat(data[i]["Value_"+ k])
+		    				count += 1
+		    			}
+		    		}
+		    		let avg = sum / count;
+		    		neighborhood = features[j].properties.Nbrhood
+		    		final[i][time].push({[neighborhood] : avg})
+		    	}
+		    	console.log(final)
+		    }
+		})
+	});
+
+</script>
+</body>
