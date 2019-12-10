@@ -47,7 +47,6 @@ var width = 960,
 // Define color scale
 console.log(d3)
 var color = d3.scale.linear()
-  .domain([1, 20])
   .clamp(true)
   .range(['#fff', '#409A99']);
 
@@ -91,24 +90,44 @@ var bigText = g.append('text')
   .attr('x', 20)
   .attr('y', 45);
 
-var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
+var globalData = {}
 
-  var features = mapData.features;
-
-  // Update color scale domain based on data
-  color.domain([0, d3.max(features, nameLength)]);
-
-  // Draw each province as a path
-  mapLayer.selectAll('path')
-      .data(features)
-    .enter().append('path')
-      .attr('d', path)
-      .attr('vector-effect', 'non-scaling-stroke')
-      .style('fill', fillFn)
-      .on('mouseover', mouseover)
-      .on('mouseout', mouseout)
-      .on('click', clicked);
+//Read in test data and parse into a javascript object where the neighborhoods are the keys and the values are the values
+//Calls drawMap after processing is complete
+d3.csv("TestData.csv", function(d) {
+	var data = new Object();
+	for(i = 0; i<d.length; i++) {
+		data[d[i]["Neighborhood"]] = parseInt(d[i]["Value"])
+	}
+	drawMap(data)
 });
+
+function drawMap(data) {
+	globalData = data
+	var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
+
+	  var features = mapData.features;
+
+	  //get the maximum value from the data
+	  maxVal = d3.max(features, function(d) {
+	  	return data[nameFn(d)]
+	  })
+	  // Update color scale domain based on data
+	  color.domain([0, maxVal]);
+
+	  // Draw each province as a path
+	  mapLayer.selectAll('path')
+	      .data(features)
+	    .enter().append('path')
+	      .attr('d', path)
+	      .attr('vector-effect', 'non-scaling-stroke')
+	      .style('fill', fillFn)
+	      .on('mouseover', mouseover)
+	      .on('mouseout', mouseout)
+	      .on('click', clicked);
+	});
+}
+
 
 // Get province name
 function nameFn(d){
@@ -123,7 +142,7 @@ function nameLength(d){
 
 // Get province color
 function fillFn(d){
-  return color(nameLength(d));
+  return color(globalData[nameFn(d)]);
 }
 
 // When clicked, zoom in
