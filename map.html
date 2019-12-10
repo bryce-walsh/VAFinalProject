@@ -45,7 +45,6 @@ var width = 960,
     centered;
 
 // Define color scale
-console.log(d3)
 var color = d3.scale.linear()
   .clamp(true)
   .range(['#fff', '#409A99']);
@@ -91,14 +90,17 @@ var bigText = g.append('text')
   .attr('y', 45);
 
 var globalData = {}
+var time = 0
 
 //Read in test data and parse into a javascript object where the neighborhoods are the keys and the values are the values
 //Calls drawMap after processing is complete
-d3.csv("TestData.csv", function(d) {
-	var data = new Object();
-	for(i = 0; i<d.length; i++) {
-		data[d[i]["Neighborhood"]] = parseInt(d[i]["Value"])
-	}
+d3.json("radiation.json", function(d) {
+  console.log(JSON.parse(d))
+	var data = JSON.parse(d)[time];
+	/*for(i = 0; i<d.length; i++) {
+		data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
+	}*/
+  console.log(data)
 	drawMap(data)
 });
 
