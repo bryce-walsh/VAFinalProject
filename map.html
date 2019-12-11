@@ -35,10 +35,26 @@ text.big-text{
 </style>
 <body>
 
+<div class="slidecontainer">
+  <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
+    <p>Value: <span id="demo"></span></p>
+</div>
+
 <svg></svg>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
+
 <script>
+
+var slider = document.getElementById("myRange");
+var output = document.getElementById("demo");
+output.innerHTML = slider.value; // Display the default slider value
+
+// Update the current slider value (each time you drag the slider handle)
+slider.oninput = function() {
+  output.innerHTML = this.value;
+  updateData(this.value)
+}
 
 var width = 960,
     height = 500,
@@ -90,46 +106,71 @@ var bigText = g.append('text')
   .attr('y', 45);
 
 var globalData = {}
-var time = 0
+initData()
 
-//Read in test data and parse into a javascript object where the neighborhoods are the keys and the values are the values
-//Calls drawMap after processing is complete
-d3.json("radiation.json", function(d) {
-  console.log(JSON.parse(d))
-	var data = JSON.parse(d)[time];
-	/*for(i = 0; i<d.length; i++) {
-		data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
-	}*/
-  console.log(data)
-	drawMap(data)
-});
-
-function drawMap(data) {
-	globalData = data
-	var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
-
-	  var features = mapData.features;
-
-	  //get the maximum value from the data
-	  maxVal = d3.max(features, function(d) {
-	  	return data[nameFn(d)]
-	  })
-	  // Update color scale domain based on data
-	  color.domain([0, maxVal]);
-
-	  // Draw each province as a path
-	  mapLayer.selectAll('path')
-	      .data(features)
-	    .enter().append('path')
-	      .attr('d', path)
-	      .attr('vector-effect', 'non-scaling-stroke')
-	      .style('fill', fillFn)
-	      .on('mouseover', mouseover)
-	      .on('mouseout', mouseout)
-	      .on('click', clicked);
-	});
+function initData() {
+    d3.json("radiation.json", function(d) {
+    console.log(JSON.parse(d))
+    var data = JSON.parse(d)[0];
+    /*for(i = 0; i<d.length; i++) {
+      data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
+    }*/
+    console.log(data)
+    drawMap(data)
+  });
 }
 
+function drawMap(data) {
+  globalData = data
+  var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
+
+    var features = mapData.features;
+
+    //get the maximum value from the data
+    maxVal = d3.max(features, function(d) {
+      return data[nameFn(d)]
+    })
+    // Update color scale domain based on data
+    color.domain([0, maxVal]);
+
+    // Draw each province as a path
+    mapLayer.selectAll('path')
+        .data(features)
+      .enter().append('path')
+        .attr('d', path)
+        .attr('vector-effect', 'non-scaling-stroke')
+        .style('fill', fillFn)
+        .on('mouseover', mouseover)
+        .on('mouseout', mouseout)
+        .on('click', clicked);
+  });
+}
+
+//Read in radiation data and parse into a javascript object where the neighborhoods are the keys and the values are the values
+//Calls drawMap after processing is complete
+function updateData(time) {
+  d3.json("radiation.json", function(d) {
+    console.log(JSON.parse(d))
+  	var data = JSON.parse(d)[time];
+  	/*for(i = 0; i<d.length; i++) {
+  		data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
+  	}*/
+    console.log(data)
+  	updateMap(data)
+  });
+}
+
+function updateMap(data){
+  globalData = data
+  var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
+
+    var features = mapData.features;
+
+    // Draw each province as a path
+  mapLayer.selectAll('path')
+    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+  });
+}
 
 // Get province name
 function nameFn(d){
