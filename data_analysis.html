@@ -17,6 +17,7 @@
 	  .projection(projection);
 	var final_radiation = new Array
 	var final_uncertainty = new Array
+	var final_positions = new Array
 	var uncertaintyJson = d3.json('./close.json', function(error, uncertaintyData) {
 		var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
 			var features = mapData.features;
@@ -25,6 +26,7 @@
 			    	time = data[i]["Timestamp"]
 			    	radiation = {time : time}
 			    	uncertainty = {time : time}
+			    	positions = {}
 			    	for (var j = 0; j < features.length; j++) {
 			    		let sum = 0
 			    		let count = 0
@@ -42,6 +44,13 @@
 								    		"coordinates": [data[i]["Long_"+ k], data[i]["Lat_"+ k]]
 								  		}
 									})
+			    			positions[[k]] = {'point' : point}
+			    			if (k <= 50) {
+			    				positions[[k]]['type'] = 'mobile'
+			    			}
+			    			else {
+			    				positions[[k]]['type'] = 'static'
+			    			}
 			    			if ((bounds[0][1] - 20) < point[1] && (bounds[1][1] + 20) > point[1] &&
 			    				(bounds[0][0] - 20) < point[0] && (bounds[1][0] + 20) > point[0]) {
 			    				sum += parseFloat(data[i]["Value_"+ k])
@@ -65,12 +74,15 @@
 			    	}
 			    	final_radiation.push(radiation)
 			    	final_uncertainty.push(uncertainty)
+			    	final_positions.push(positions)
 			    }
 			    console.log("radiation", final_radiation)
 			    console.log("uncertainty", final_uncertainty)
+			    console.log("positions", final_positions)
 			    stringified_rad = JSON.stringify(final_radiation)
 			    stringified_uncertainty = JSON.stringify(final_uncertainty)
-			    $.post('http://localhost:5000/', {'radiation': stringified_rad, 'uncertainty': stringified_uncertainty})
+			    stringified_positions = JSON.stringify(final_positions)
+			    $.post('http://localhost:5000/', {'radiation': stringified_rad, 'uncertainty': stringified_uncertainty, 'positions': stringified_positions})
 			})
 		});
 	});
