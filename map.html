@@ -40,6 +40,9 @@ text.big-text{
     <p>Value: <span id="demo"></span></p>
 </div>
 
+<form>
+  <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
+</form>
 <div id="scatter_graph"></div>
 
 <svg></svg>
@@ -55,6 +58,7 @@ output.innerHTML = slider.value; // Display the default slider value
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
   output.innerHTML = this.value;
+  time = this.value
   updateData(this.value)
 }
 
@@ -65,7 +69,7 @@ var width = 960,
 // Define color scale
 var color = d3.scale.linear()
   .clamp(true)
-  .range(['#fff', '#409A99']);
+  .range(['#00ff00', '#ff0000']);
 
 var projection = d3.geo.mercator()
   .scale(100000)
@@ -108,22 +112,29 @@ var bigText = g.append('text')
   .attr('y', 45);
 
 var globalData = {}
+var globalUncertainty = {}
+
+var time = 0
+
+var uncertainty = false
+
+var maxUncertainty = 0
+
 initData()
 
 function initData() {
-    d3.json("radiation.json", function(d) {
-    console.log(JSON.parse(d))
-    var data = JSON.parse(d)[0];
-    /*for(i = 0; i<d.length; i++) {
-      data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
-    }*/
-    console.log(data)
-    drawMap(data)
+  d3.json("radiation.json", function(d) {
+      d3.json("uncertainty.json", function(u) {
+        var uncertaintyData = JSON.parse(u)[time]
+        var data = JSON.parse(d)[time];
+        drawMap(data, uncertaintyData)
+      });
   });
 }
 
-function drawMap(data) {
+function drawMap(data, uncertaintyData) {
   globalData = data
+  globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
 
     var features = mapData.features;
@@ -132,6 +143,11 @@ function drawMap(data) {
     maxVal = d3.max(features, function(d) {
       return data[nameFn(d)]
     })
+
+    maxUncertainty = d3.max(features, function(d) {
+      return uncertaintyData[nameFn(d)]
+    })
+
     // Update color scale domain based on data
     color.domain([0, maxVal]);
 
@@ -142,6 +158,7 @@ function drawMap(data) {
         .attr('d', path)
         .attr('vector-effect', 'non-scaling-stroke')
         .style('fill', fillFn)
+        .style('opacity', opacityFn)
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .on('click', clicked);
@@ -152,26 +169,30 @@ function drawMap(data) {
 //Calls drawMap after processing is complete
 function updateData(time) {
   d3.json("radiation.json", function(d) {
-    console.log(JSON.parse(d))
-  	var data = JSON.parse(d)[time];
-  	/*for(i = 0; i<d.length; i++) {
-  		data[d[i]["Neighborhood"]] = parseFloat(d[i]["Value"])
-  	}*/
-    console.log(data)
-  	updateMap(data)
+      d3.json("uncertainty.json", function(u) {
+        var uncertaintyData = JSON.parse(u)[time]
+        var data = JSON.parse(d)[time];
+        updateMap(data, uncertaintyData)
+      });
   });
 }
 
-function updateMap(data){
+function updateMap(data, uncertaintyData){
   globalData = data
+  globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
-
-    var features = mapData.features;
+    var features = mapData.features; 
 
     // Draw each province as a path
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
+    .style('opacity', function(d){return opacityFn(d)});
   });
+}
+
+function changeUncertainty(){
+  uncertainty = !uncertainty
+  updateData(time)
 }
 
 // Get province name
@@ -179,15 +200,16 @@ function nameFn(d){
   return d && d.properties ? d.properties.Nbrhood : null;
 }
 
-// Get province name length
-function nameLength(d){
-  var n = nameFn(d);
-  return n ? n.length : 0;
-}
-
 // Get province color
 function fillFn(d){
   return color(globalData[nameFn(d)]);
+}
+
+function opacityFn(d){
+  if (uncertainty) {
+    return 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+  }
+  return 1
 }
 
 // When clicked, zoom in

@@ -56,7 +56,12 @@
 			    		neighborhood = features[j].properties.Nbrhood
 			    		radiation[[neighborhood]] = avg
 			    		let u_calc = (uncertainty_k / sensor_ct) / sensor_ct
-			    		uncertainty[[neighborhood]] = Math.abs(u_calc)
+			    		if (sensor_ct) {
+			    			uncertainty[[neighborhood]] = Math.abs(u_calc)
+			    		}
+			    		else {
+			    			uncertainty[[neighborhood]] = 9.845
+			    		}
 			    	}
 			    	final_radiation.push(radiation)
 			    	final_uncertainty.push(uncertainty)
