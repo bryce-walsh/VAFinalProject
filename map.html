@@ -86,11 +86,11 @@ var svg = d3.select('svg')
   .attr('height', height);
 
 // Add background
-svg.append('rect')
+rect = svg.append('rect')
   .attr('class', 'background')
   .attr('width', width)
   .attr('height', height)
-  .on('click', clicked);
+  .on('click', clicked)
 
 var g = svg.append('g');
 
@@ -114,6 +114,10 @@ var bigText = g.append('text')
 var globalData = {}
 var globalUncertainty = {}
 
+var totalUncertainty = []
+var totalRadiation = []
+var totalPosition = []
+
 var time = 0
 
 var uncertainty = false
@@ -125,14 +129,20 @@ initData()
 function initData() {
   d3.json("radiation.json", function(d) {
       d3.json("uncertainty.json", function(u) {
-        var uncertaintyData = JSON.parse(u)[time]
-        var data = JSON.parse(d)[time];
-        drawMap(data, uncertaintyData)
+        d3.json("position.json", function(p){
+          totalUncertainty = JSON.parse(u)
+          totalRadiation = JSON.parse(d)
+          totalPosition = JSON.parse(p)
+          var uncertaintyData = totalUncertainty[time]
+          var data = totalRadiation[time];
+          var positionData = totalPosition[time]
+          drawMap(data, uncertaintyData, positionData)
+        })
       });
   });
 }
 
-function drawMap(data, uncertaintyData) {
+function drawMap(data, uncertaintyData, positionData) {
   globalData = data
   globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
@@ -162,22 +172,30 @@ function drawMap(data, uncertaintyData) {
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .on('click', clicked);
+
+    for (const key of Object.keys(positionData)){
+      mapLayer.selectAll("circle")
+        .data(Object.keys(positionData)).enter()
+        .append("circle")
+        .attr("cx", function(d){return positionData[d]['point'][0]})
+        .attr("cy", function(d){return positionData[d]['point'][1]})
+        .attr("r", "4px")
+        .attr("fill", function(d){return positionData[d]['type'] == 'mobile' ? "yellow" : "blue"})
+    }
   });
 }
 
 //Read in radiation data and parse into a javascript object where the neighborhoods are the keys and the values are the values
 //Calls drawMap after processing is complete
 function updateData(time) {
-  d3.json("radiation.json", function(d) {
-      d3.json("uncertainty.json", function(u) {
-        var uncertaintyData = JSON.parse(u)[time]
-        var data = JSON.parse(d)[time];
-        updateMap(data, uncertaintyData)
-      });
-  });
+  var uncertaintyData = totalUncertainty[time]
+  var data = totalRadiation[time];
+  var positionData  = totalPosition[time]
+  updateMap(data, uncertaintyData, positionData)
 }
 
-function updateMap(data, uncertaintyData){
+function updateMap(data, uncertaintyData, positionData){
+  console.log("here")
   globalData = data
   globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
@@ -188,6 +206,18 @@ function updateMap(data, uncertaintyData){
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
     .style('opacity', function(d){return opacityFn(d)});
   });
+
+  mapLayer.selectAll('circle').remove()
+
+  for (const key of Object.keys(positionData)){
+      mapLayer.selectAll("circle")
+        .data(Object.keys(positionData)).enter()
+        .append("circle")
+        .attr("cx", function(d){return positionData[d]['point'][0]})
+        .attr("cy", function(d){return positionData[d]['point'][1]})
+        .attr("r", "4px")
+        .attr("fill", function(d){return positionData[d]['type'] == 'mobile' ? "yellow" : "blue"})
+    }
 }
 
 function changeUncertainty(){
