@@ -48,6 +48,7 @@ text.big-text{
 <svg></svg>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://unpkg.com/mathjs@6.2.5/dist/math.min.js"></script>
 
 <script>
 
@@ -125,31 +126,47 @@ initData()
 function initData() {
   d3.json("radiation.json", function(d) {
       d3.json("uncertainty.json", function(u) {
-        var uncertaintyData = JSON.parse(u)[time]
-        var data = JSON.parse(d)[time];
-        drawMap(data, uncertaintyData)
+        var entireUncertaintyData = JSON.parse(u);
+        var entireData = JSON.parse(d);
+        drawMap(entireData, entireUncertaintyData);
       });
   });
 }
 
-function drawMap(data, uncertaintyData) {
+function rawValuesFromData(entireData, mapData) {
+  rawValues = []
+  var features = mapData.features;
+  for (i = 0; i < entireData.length; i++){
+    dataForTimestamp = entireData[i]
+    for (j = 0; j < features.length; j++) {
+      if (dataForTimestamp[nameFn(features[j])] != null){
+        rawValues.push(dataForTimestamp[nameFn(features[j])])
+      }
+    }
+  }
+  return rawValues
+}
+
+function drawMap(entireData, entireUncertaintyData) {
+  data = entireData[time]
+  uncertaintyData = entireUncertaintyData[time]
   globalData = data
   globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
 
     var features = mapData.features;
 
-    //get the maximum value from the data
-    maxVal = d3.max(features, function(d) {
-      return data[nameFn(d)]
-    })
+    maxVal = 0;
+    rawValues = rawValuesFromData(entireData, mapData)
+    stdDev = math.std(rawValues)
+    median = math.median(rawValues)
 
     maxUncertainty = d3.max(features, function(d) {
       return uncertaintyData[nameFn(d)]
     })
 
     // Update color scale domain based on data
-    color.domain([0, maxVal]);
+    color.domain([0, median + .1 * stdDev]);
 
     // Draw each province as a path
     mapLayer.selectAll('path')
