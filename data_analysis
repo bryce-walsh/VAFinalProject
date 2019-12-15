@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script>
+const fs = require('fs') 
+  
+fs.readFile('mobile_10mins.csv', (err, data) => { 
+    if (err) throw err; 
+  
+    console.log(data.toString()); 
+}) 
+</script>
+</body>
