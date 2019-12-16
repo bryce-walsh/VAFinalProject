@@ -14,10 +14,6 @@
   stroke: #aaa;
 }
 
-.effect-layer{
-  pointer-events:none;
-}
-
 text{
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 300;
@@ -26,10 +22,6 @@ text{
 text.big-text{
   font-size: 30px;
   font-weight: 400;
-}
-
-.effect-layer text, text.dummy-text{
-  font-size: 12px;
 }
 
 path { 
@@ -49,7 +41,7 @@ path {
 #play-button {
       position: absolute;
       top: 3px;
-      left: 170px;
+      left: 360px;
       background: #f08080;
       padding-right: 26px;
       border-radius: 3px;
@@ -64,7 +56,37 @@ path {
 
     #play-button:hover {
       background-color: #696969;
-    }    
+    }
+
+.slider {
+  -webkit-appearance: none;
+  width: 30%;
+  height: 5px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%; 
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}    
 
 </style>
 <body>
@@ -74,7 +96,7 @@ path {
     <div id="vis">
       <button id="play-button">Play</button>
     </div>
-    <p>Value: <span id="demo"></span></p>
+    <p>Time: <span id="demo"></span></p>
 </div>
 
 <form>
@@ -92,11 +114,18 @@ path {
 var moving = false;
 var currentValue = 0;
 var targetValue = 719;
+var day = 6;
+var hour = 0;
+var minute = 0;
+var wholeDay = 0;
+var time = 0;
+var currentDate;
+var dateString;
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 var totalUncertainty = []
 var totalRadiation = []
 var totalPosition = []
-
 var slider = document.getElementById("myRange");
 
 var playButton = d3.select("#play-button").on("click", function() {
@@ -115,23 +144,44 @@ var playButton = d3.select("#play-button").on("click", function() {
 
 function animateElements() {
   slider.stepUp();
-  output.innerHTML = totalRadiation[slider.value]['time'];
   time = slider.value;
+  console.log(time);
+  if (time == 719) {
+    moving = false;
+    console.log('ye')
+    d3.select("#play-button").innerHTML = "Play";
+  }
+  currentDate = calculateDate();
+  output.innerHTML = convertDateString(currentDate);
   updateData(slider.value);
   if (moving) {
     setTimeout(animateElements, 100);
   }
 }
 
+function calculateDate() {
+  minute = (time * 10) % 60;
+  hour = (Math.floor((time * 10) / 60)) % 24;
+  wholeDay = Math.floor((time * 10) / 1440);
+  day = 6 + wholeDay;
+  return new Date(2020, 3, day, hour, minute, 0);
+}
+
+function convertDateString(currDate) {
+  var dateString = currDate.toString();
+  return dateString.slice(0, 21);
+}
 
 var output = document.getElementById("demo");
-output.innerHTML = slider.value; // Display the default slider value
+currentDate = calculateDate()
+output.innerHTML = convertDateString(currentDate); // Display the default slider value
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
-  output.innerHTML = totalRadiation[this.value]['time'];
-  time = this.value
-  updateData(this.value)
+  time = this.value;
+  currentDate = calculateDate();
+  output.innerHTML = convertDateString(currentDate);
+  updateData(this.value);
 }
 
 var width = 960,
@@ -166,27 +216,28 @@ rect = svg.append('rect')
 
 var g = svg.append('g');
 
-var effectLayer = g.append('g')
-  .classed('effect-layer', true);
-
 var mapLayer = g.append('g')
   .classed('map-layer', true);
-
-var dummyText = g.append('text')
-  .classed('dummy-text', true)
-  .attr('x', 10)
-  .attr('y', 30)
-  .style('opacity', 0);
 
 var bigText = g.append('text')
   .classed('big-text', true)
   .attr('x', 20)
   .attr('y', 45);
 
+var radiationText = g.append('text')
+  .attr('x', 20)
+  .attr('y', 70)
+
+var uncertaintyText = g.append('text')
+  .attr('x', 20)
+  .attr('y', 85)
+
 var globalData = {}
 var globalUncertainty = {}
 
-var time = 0
+var currMouseover = null
+
+var globalTime = 0
 
 var uncertainty = false
 
@@ -201,9 +252,9 @@ function initData() {
           totalUncertainty = JSON.parse(u)
           totalRadiation = JSON.parse(d)
           totalPosition = JSON.parse(p)
-          var uncertaintyData = totalUncertainty[time]
-          var data = totalRadiation[time];
-          var positionData = totalPosition[time]
+          var uncertaintyData = totalUncertainty[globalTime]
+          var data = totalRadiation[globalTime];
+          var positionData = totalPosition[globalTime]
           drawMap(data, uncertaintyData, positionData, totalRadiation)
         })
       });
@@ -270,9 +321,10 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
 //Read in radiation data and parse into a javascript object where the neighborhoods are the keys and the values are the values
 //Calls drawMap after processing is complete
 function updateData(time) {
-  var uncertaintyData = totalUncertainty[time]
+  globalTime = time;
+  var uncertaintyData = totalUncertainty[time];
   var data = totalRadiation[time];
-  var positionData  = totalPosition[time]
+  var positionData  = totalPosition[time];
   updateMap(data, uncertaintyData, positionData)
 }
 
@@ -282,6 +334,7 @@ function updateMap(data, uncertaintyData, positionData){
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
     var features = mapData.features; 
 
+  if (currMouseover != null) {displayData(currMouseover)}
     // Draw each province as a path
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
@@ -351,31 +404,41 @@ function clicked(d) {
     .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')');
 }
 
+d3.selection.prototype.moveToFront = function() {
+  return this.each(function(){
+    this.parentNode.appendChild(this);
+  });
+};
+
 function mouseover(d){
   // Highlight hovered province
-  d3.select(this).style('fill', 'orange');
+  //d3.select(this).style('fill', 'orange');
+  d3.select(this).moveToFront();
+  d3.select(this).style("stroke", "blue");
+
+  currMouseover = nameFn(d)
 
   // Draw effects
-  textArt(nameFn(d));
+  textArt(currMouseover);
+  displayData(currMouseover);
+  updateData(globalTime)
+
 }
 
 function mouseout(d){
+  d3.select(this).style("stroke", "steelblue");
+
   // Reset province color
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
 
-  // Remove effect text
-  effectLayer.selectAll('text').transition()
-    .style('opacity', 0)
-    .remove();
-
+  currMouseover = null
   // Clear province name
   bigText.text('');
+  radiationText.text('');
+  uncertaintyText.text('');
 }
 
-// Gimmick
-// Just me playing around.
-// You won't need this for a regular map.
 
 var BASE_FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
@@ -415,144 +478,29 @@ function textArt(text){
     .style('font-family', fontFamily)
     .text(text);
 
-  // Use dummy text to compute actual width of the text
-  // getBBox() will return bounding box
-  dummyText
-    .style('font-family', fontFamily)
-    .text(text);
-  var bbox = dummyText.node().getBBox();
+}
 
-  var textWidth = bbox.width;
-  var textHeight = bbox.height;
-  var xGap = 3;
-  var yGap = 1;
+function displayData(text) {
+  var fontIndex = Math.round(Math.random() * FONTS.length);
+  var fontFamily = FONTS[fontIndex] + ', ' + BASE_FONT;
 
-  // Generate the positions of the text in the background
-  var xPtr = 0;
-  var yPtr = 0;
-  var positions = [];
-  var rowCount = 0;
-  while(yPtr < height){
-    while(xPtr < width){
-      var point = {
-        text: text,
-        index: positions.length,
-        x: xPtr,
-        y: yPtr
-      };
-      var dx = point.x - width/2 + textWidth/2;
-      var dy = point.y - height/2;
-      point.distance = dx*dx + dy*dy;
+  var radiation = globalData[text]
+  var uncertainty = globalUncertainty[text]
 
-      positions.push(point);
-      xPtr += textWidth + xGap;
-    }
-    rowCount++;
-    xPtr = rowCount%2===0 ? 0 : -textWidth/2;
-    xPtr += Math.random() * 10;
-    yPtr += textHeight + yGap;
-  }
+  var displayRadiation = radiation != null ? radiation.toFixed(2) : "No Data"
+  var displayUncertainty = uncertainty != null ? uncertainty.toFixed(2) : "No Data"
 
-  var selection = effectLayer.selectAll('text')
-    .data(positions, function(d){return d.text+'/'+d.index;});
+  radiationText
+    .style('fontFamily', fontFamily)
+    .text("Radiation Level: " + displayRadiation)
 
-  // Clear old ones
-  selection.exit().transition()
-    .style('opacity', 0)
-    .remove();
-
-  // Create text but set opacity to 0
-  selection.enter().append('text')
-    .text(function(d){return d.text;})
-    .attr('x', function(d){return d.x;})
-    .attr('y', function(d){return d.y;})
-    .style('font-family', fontFamily)
-    .style('fill', '#777')
-    .style('opacity', 0);
-
-  selection
-    .style('font-family', fontFamily)
-    .attr('x', function(d){return d.x;})
-    .attr('y', function(d){return d.y;});
-
-  // Create transtion to increase opacity from 0 to 0.1-0.5
-  // Add delay based on distance from the center of the <svg> and a bit more randomness.
-  selection.transition()
-    .delay(function(d){
-      return d.distance * 0.01 + Math.random()*1000;
-    })
-    .style('opacity', function(d){
-      return 0.1 + Math.random()*0.4;
-    });
+  uncertaintyText
+    .style('fontFamily', fontFamily)
+    .text("Uncertainty: " + displayUncertainty)
 }
 
 </script>
 
-
-<script>
-  var margin = {top: 20, right: 20, bottom: 30, left: 40},
-    width = 600 - margin.left - margin.right,
-    height = 270 - margin.top - margin.bottom;
-
-var x = d3.scale.linear()
-    .range([0, width]);
-
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-var z = d3.scale.category10();
-
-var svg = d3.select("#side_graphs").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-d3.csv("testscatter.csv", function(error, data) {
-  if (error) throw error;
-
-  // Compute the series names ("y1", "y2", etc.) from the loaded CSV.
-  var seriesNames = d3.keys(data[0])
-      .filter(function(d) { return d !== "x"; })
-      .sort();
-
-  // Map the data to an array of arrays of {x, y} tuples.
-  var series = seriesNames.map(function(series) {
-    return data.map(function(d) {
-      return {x: +d.x, y: +d[series]};
-    });
-  });
-
-  // Compute the scales’ domains.
-  x.domain(d3.extent(d3.merge(series), function(d) { return d.x; })).nice();
-  y.domain(d3.extent(d3.merge(series), function(d) { return d.y; })).nice();
-
-  // Add the x-axis.
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.svg.axis().scale(x).orient("bottom"));
-
-  // Add the y-axis.
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(d3.svg.axis().scale(y).orient("left"));
-
-  // Add the points!
-  svg.selectAll(".series")
-      .data(series)
-    .enter().append("g")
-      .attr("class", "series")
-      .style("fill", function(d, i) { return z(i); })
-    .selectAll(".point")
-      .data(function(d) { return d; })
-    .enter().append("circle")
-      .attr("class", "point")
-      .attr("r", 4.5)
-      .attr("cx", function(d) { return x(d.x); })
-      .attr("cy", function(d) { return y(d.y); });
-});
-</script>
 
 
 <!-- Mobile Average Line Graph -->
