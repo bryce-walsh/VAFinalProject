@@ -115,7 +115,6 @@ var playButton = d3.select("#play-button").on("click", function() {
 function animateElements() {
   slider.stepUp();
   time = slider.value;
-  console.log(time);
   if (time == 719) {
     moving = false;
     console.log('ye')
@@ -252,17 +251,24 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
 
     var features = mapData.features;
 
-    maxVal = 0;
-    rawValues = rawValuesFromData(totalRadiation, mapData)
-    stdDev = math.std(rawValues)
-    median = math.median(rawValues)
+    rawValuesRadiation = rawValuesFromData(totalRadiation, mapData)
+    stdDevRad = math.std(rawValuesRadiation)
+    medianRad = math.median(rawValuesRadiation)
+    maxScaleRad = medianRad + .1 * stdDevRad
+
+    rawValuesUncertainty = rawValuesFromData(totalUncertainty, mapData)
+    stdDevUnc = math.std(rawValuesUncertainty)
+    meanUnc = math.mean(rawValuesUncertainty)
+    maxUncertainty = meanUnc + stdDevUnc
+    console.log(maxUncertainty)
+
 
     maxUncertainty = d3.max(features, function(d) {
       return uncertaintyData[nameFn(d)]
     })
 
     // Update color scale domain based on data
-    color.domain([0, median + .1 * stdDev]);
+    color.domain([0, maxScaleRad]);
 
     // Draw each province as a path
     mapLayer.selectAll('path')
@@ -271,7 +277,6 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
         .attr('d', path)
         .attr('vector-effect', 'non-scaling-stroke')
         .style('fill', fillFn)
-        .style('opacity', opacityFn)
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .on('click', clicked);
@@ -308,7 +313,6 @@ function updateMap(data, uncertaintyData, positionData){
     // Draw each province as a path
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
-    .style('opacity', function(d){return opacityFn(d)});
   });
 
   mapLayer.selectAll('circle').remove()
@@ -334,16 +338,25 @@ function nameFn(d){
   return d && d.properties ? d.properties.Nbrhood : null;
 }
 
-// Get province color
-function fillFn(d){
-  return color(globalData[nameFn(d)]);
+function convertHex(hex,alpha){
+  hex = hex.replace('#','');
+
+  a = Math.round(alpha * 255).toString(16);
+
+  return "#" + hex + a;
 }
 
-function opacityFn(d){
+// Get province color
+function fillFn(d){
+  var rawColor = color(globalData[nameFn(d)])
+  var newColor = rawColor
   if (uncertainty) {
-    return 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    opacity = 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    newColor = convertHex(rawColor, opacity)
   }
-  return 1
+  console.log(rawColor)
+  console.log(newColor)
+  return newColor;
 }
 
 // When clicked, zoom in
