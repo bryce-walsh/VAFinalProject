@@ -74,7 +74,7 @@ path {
     <div id="vis">
       <button id="play-button">Play</button>
     </div>
-    <p>Value: <span id="demo"></span></p>
+    <p>Time: <span id="demo"></span></p>
 </div>
 
 <form>
@@ -92,7 +92,14 @@ path {
 var moving = false;
 var currentValue = 0;
 var targetValue = 719;
-
+var day = 6;
+var hour = 0;
+var minute = 0;
+var wholeDay = 0;
+var time = 0
+var currentDate;
+var dateString;
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 var slider = document.getElementById("myRange");
 
 var playButton = d3.select("#play-button").on("click", function() {
@@ -112,23 +119,44 @@ var playButton = d3.select("#play-button").on("click", function() {
 
 function animateElements() {
   slider.stepUp();
-  output.innerHTML = slider.value;
   time = slider.value;
+  console.log(time);
+  if (time == 719) {
+    moving = false;
+    console.log('ye')
+    d3.select("#play-button").innerHTML = "Play";
+  }
+  currentDate = calculateDate();
+  output.innerHTML = convertDateString(currentDate);
   updateData(slider.value);
   if (moving) {
     setTimeout(animateElements, 100);
   }
 }
 
+function calculateDate() {
+  minute = (time * 10) % 60;
+  hour = (Math.floor((time * 10) / 60)) % 24;
+  wholeDay = Math.floor((time * 10) / 1440);
+  day = 6 + wholeDay;
+  return new Date(2020, 3, day, hour, minute, 0);
+}
+
+function convertDateString(currDate) {
+  var dateString = currDate.toString();
+  return dateString.slice(0, 21);
+}
 
 var output = document.getElementById("demo");
-output.innerHTML = slider.value; // Display the default slider value
+currentDate = calculateDate()
+output.innerHTML = convertDateString(currentDate); // Display the default slider value
 
 // Update the current slider value (each time you drag the slider handle)
 slider.oninput = function() {
-  output.innerHTML = this.value;
-  time = this.value
-  updateData(this.value)
+  time = this.value;
+  currentDate = calculateDate();
+  output.innerHTML = convertDateString(currentDate);
+  updateData(this.value);
 }
 
 var width = 960,
@@ -187,7 +215,7 @@ var totalUncertainty = []
 var totalRadiation = []
 var totalPosition = []
 
-var time = 0
+
 
 var uncertainty = false
 
