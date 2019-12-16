@@ -345,10 +345,6 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
     meanUnc = math.mean(rawValuesUncertainty)
     maxUncertainty = meanUnc + stdDevUnc
 
-    maxUncertainty = d3.max(features, function(d) {
-      return uncertaintyData[nameFn(d)]
-    })
-
     // Update color scale domain based on data
     color.domain([0, maxScaleRad]);
 
@@ -438,8 +434,17 @@ function fillFn(d){
   var rawColor = color(globalData[nameFn(d)])
   var newColor = rawColor
   if (uncertainty) {
-    opacity = 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
-    newColor = convertHex(rawColor, opacity)
+    if (globalUncertainty[nameFn(d)] < maxUncertainty) {
+      opacity = 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+      newColor = convertHex(rawColor, opacity)
+    }
+    else {
+      console.log("hello")
+      newColor = convertHex(rawColor, 0.01)
+      console.log(newColor)
+      console.log(rawColor)
+      console.log(globalUncertainty[nameFn(d)])
+    }
   }
   return newColor;
 }
