@@ -3,6 +3,18 @@
 <style>
 
 @import url(https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Josefin+Slab|Arvo|Lato|Vollkorn|Abril+Fatface|Old+Standard+TT|Droid+Sans|Lobster|Inconsolata|Montserrat|Playfair+Display|Karla|Alegreya|Libre+Baskerville|Merriweather|Lora|Archivo+Narrow|Neuton|Signika|Questrial|Fjalla+One|Bitter|Varela+Round);
+.container{
+    display: flex;
+}
+#leftdiv{
+    width: 700px;
+    height: 500px;
+    position: relative;
+}
+
+.rightdiv{
+    flex-grow: 1;
+}
 
 .background {
   fill: #eee;
@@ -38,12 +50,15 @@ path {
   shape-rendering: crispEdges;
 }
 
+.slidecontainer {
+  margin: auto;
+}
 #play-button {
-      position: absolute;
+      float: left;
       top: 3px;
-      left: 360px;
       background: #f08080;
       padding-right: 26px;
+      padding-left: 50px;
       border-radius: 3px;
       border: none;
       color: white;
@@ -57,10 +72,13 @@ path {
     #play-button:hover {
       background-color: #696969;
     }
-
+#timestring {
+  margin-left: 29%;
+}
 .slider {
   -webkit-appearance: none;
-  width: 30%;
+  float: left;
+  width: 80%;
   height: 5px;
   border-radius: 5px;  
   background: #d3d3d3;
@@ -68,6 +86,8 @@ path {
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;
+  margin-right: 30px;
+  margin-top: 12px;
 }
 
 .slider::-webkit-slider-thumb {
@@ -88,24 +108,38 @@ path {
   cursor: pointer;
 }    
 
+p {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+form {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
 </style>
 <body>
-
-<div class="slidecontainer">
-  <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
-    <div id="vis">
-      <button id="play-button">Play</button>
+  <div class="container">
+    <div id="leftdiv">
+      <svg id="mapclass"></svg>
+      <div id="uncertaintyid">
+        <form>
+          <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
+        </form>
+      </div>
     </div>
-    <p>Time: <span id="demo"></span></p>
+
+    <div class="rightdiv">
+      <div class="slidecontainer">
+        <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
+          <div id="vis">
+            <button id="play-button">Play</button>
+          </div>
+          <div id="timestring">
+            <p>Time: <span id="demo"></span></p>
+          </div>
+      </div>
+      <div id="side_graphs"></div>
+    </div>
 </div>
-
-<form>
-  <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
-</form>
-<div id="side_graphs"></div>
-
-
-<svg></svg>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="https://unpkg.com/mathjs@6.2.5/dist/math.min.js"></script>
@@ -183,8 +217,8 @@ slider.oninput = function() {
   updateData(this.value);
 }
 
-var width = 960,
-    height = 500,
+var width = 650,
+    height = 600,
     centered;
 
 // Define color scale
