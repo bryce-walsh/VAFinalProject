@@ -3,6 +3,18 @@
 <style>
 
 @import url(https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Josefin+Slab|Arvo|Lato|Vollkorn|Abril+Fatface|Old+Standard+TT|Droid+Sans|Lobster|Inconsolata|Montserrat|Playfair+Display|Karla|Alegreya|Libre+Baskerville|Merriweather|Lora|Archivo+Narrow|Neuton|Signika|Questrial|Fjalla+One|Bitter|Varela+Round);
+.container{
+    display: flex;
+}
+#leftdiv{
+    width: 700px;
+    height: 500px;
+    position: relative;
+}
+
+.rightdiv{
+    flex-grow: 1;
+}
 
 .background {
   fill: #eee;
@@ -38,12 +50,15 @@ path {
   shape-rendering: crispEdges;
 }
 
+.slidecontainer {
+  margin: auto;
+}
 #play-button {
-      position: absolute;
+      float: left;
       top: 3px;
-      left: 360px;
       background: #f08080;
       padding-right: 26px;
+      padding-left: 50px;
       border-radius: 3px;
       border: none;
       color: white;
@@ -57,10 +72,13 @@ path {
     #play-button:hover {
       background-color: #696969;
     }
-
+#timestring {
+  margin-left: 29%;
+}
 .slider {
   -webkit-appearance: none;
-  width: 30%;
+  float: left;
+  width: 80%;
   height: 5px;
   border-radius: 5px;  
   background: #d3d3d3;
@@ -68,6 +86,8 @@ path {
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;
+  margin-right: 30px;
+  margin-top: 12px;
 }
 
 .slider::-webkit-slider-thumb {
@@ -88,24 +108,38 @@ path {
   cursor: pointer;
 }    
 
+p {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+form {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
 </style>
 <body>
-
-<div class="slidecontainer">
-  <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
-    <div id="vis">
-      <button id="play-button">Play</button>
+  <div class="container">
+    <div id="leftdiv">
+      <svg id="mapclass"></svg>
+      <div id="uncertaintyid">
+        <form>
+          <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
+        </form>
+      </div>
     </div>
-    <p>Time: <span id="demo"></span></p>
+
+    <div class="rightdiv">
+      <div class="slidecontainer">
+        <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
+          <div id="vis">
+            <button id="play-button">Play</button>
+          </div>
+          <div id="timestring">
+            <p>Time: <span id="demo"></span></p>
+          </div>
+      </div>
+      <div id="side_graphs"></div>
+    </div>
 </div>
-
-<form>
-  <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
-</form>
-<div id="side_graphs"></div>
-
-
-<svg></svg>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="https://unpkg.com/mathjs@6.2.5/dist/math.min.js"></script>
@@ -145,7 +179,6 @@ var playButton = d3.select("#play-button").on("click", function() {
 function animateElements() {
   slider.stepUp();
   time = slider.value;
-  console.log(time);
   if (time == 719) {
     moving = false;
     console.log('ye')
@@ -184,8 +217,8 @@ slider.oninput = function() {
   updateData(this.value);
 }
 
-var width = 960,
-    height = 500,
+var width = 650,
+    height = 600,
     centered;
 
 // Define color scale
@@ -302,17 +335,22 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
 
     var features = mapData.features;
 
-    maxVal = 0;
-    rawValues = rawValuesFromData(totalRadiation, mapData)
-    stdDev = math.std(rawValues)
-    median = math.median(rawValues)
+    rawValuesRadiation = rawValuesFromData(totalRadiation, mapData)
+    stdDevRad = math.std(rawValuesRadiation)
+    medianRad = math.median(rawValuesRadiation)
+    maxScaleRad = medianRad + .1 * stdDevRad
+
+    rawValuesUncertainty = rawValuesFromData(totalUncertainty, mapData)
+    stdDevUnc = math.std(rawValuesUncertainty)
+    meanUnc = math.mean(rawValuesUncertainty)
+    maxUncertainty = meanUnc + stdDevUnc
 
     maxUncertainty = d3.max(features, function(d) {
       return uncertaintyData[nameFn(d)]
     })
 
     // Update color scale domain based on data
-    color.domain([0, median + .1 * stdDev]);
+    color.domain([0, maxScaleRad]);
 
     // Draw each province as a path
     mapLayer.selectAll('path')
@@ -321,7 +359,6 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
         .attr('d', path)
         .attr('vector-effect', 'non-scaling-stroke')
         .style('fill', fillFn)
-        .style('opacity', opacityFn)
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .on('click', clicked);
@@ -360,8 +397,7 @@ function updateMap(data, uncertaintyData, positionData){
   if (currMouseover != null) {displayData(currMouseover)}
     // Draw each province as a path
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
-    .style('opacity', function(d){return opacityFn(d)});
+    .style('fill', function(d){return fillFn(d);})
   });
 
   mapLayer.selectAll('circle').remove()
@@ -389,16 +425,23 @@ function nameFn(d){
   return d && d.properties ? d.properties.Nbrhood : null;
 }
 
-// Get province color
-function fillFn(d){
-  return color(globalData[nameFn(d)]);
+function convertHex(hex,alpha){
+  hex = hex.replace('#','');
+
+  a = Math.round(alpha * 255).toString(16);
+
+  return "#" + hex + a;
 }
 
-function opacityFn(d){
+// Get province color
+function fillFn(d){
+  var rawColor = color(globalData[nameFn(d)])
+  var newColor = rawColor
   if (uncertainty) {
-    return 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    opacity = 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    newColor = convertHex(rawColor, opacity)
   }
-  return 1
+  return newColor;
 }
 
 // When clicked, zoom in
@@ -418,10 +461,6 @@ function clicked(d) {
     k = 1;
     centered = null;
   }
-
-  // Highlight the clicked province
-  mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
 
   // Zoom
   g.transition()
@@ -456,8 +495,6 @@ function mouseover(d){
   textArt(currMouseover);
   displayData(currMouseover);
   updateData(globalTime)
-  mapLayer.selectAll("circle").moveToFront()
-
 }
 
 function mouseout(d){
@@ -465,7 +502,7 @@ function mouseout(d){
 
   // Reset province color
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+    .style('fill', function(d){return fillFn(d);});
 
   currMouseover = null
   // Clear province name
