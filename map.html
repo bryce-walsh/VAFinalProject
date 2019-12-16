@@ -277,12 +277,27 @@ var uncertaintyText = g.append('text')
   .attr('x', 20)
   .attr('y', 85)
 
-var tooltip = g.append('text')
+var tooltipRect = g.append('rect')
+  .attr('fill', 'white')
+  .attr('opacity', 0)
+  .attr('width', '145px')
+  .attr('height', '60px')
+
+var tooltip1 = g.append('text')
+  .attr('x', 0)
+  .attr('y', 0)
+
+var tooltip2 = g.append('text')
+  .attr('x', 0)
+  .attr('y', 0)
+
+var tooltip3 = g.append('text')
   .attr('x', 0)
   .attr('y', 0)
 
 var globalData = {}
 var globalUncertainty = {}
+var globalPosition = {}
 
 var currMouseover = null
 
@@ -327,6 +342,7 @@ function rawValuesFromData(entireData, mapData) {
 function drawMap(data, uncertaintyData, positionData, totalRadiation) {
   globalData = data
   globalUncertainty = uncertaintyData
+  globalPosition = positionData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
 
     var features = mapData.features;
@@ -367,7 +383,8 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
         .attr("cy", d => positionData[d]['point'][1])
         .attr("r", "4px")
         .attr("fill", d => positionData[d]['type'] == 'mobile' ? "yellow" : "blue")
-        .on("mouseover", d => console.log(d))//sensorTooltip(d))
+        .on("mouseover", d => sensorTooltip(d))
+        .on("mouseout", d => tooltipOut(d))
     }
   });
 }
@@ -385,13 +402,14 @@ function updateData(time) {
 function updateMap(data, uncertaintyData, positionData){
   globalData = data
   globalUncertainty = uncertaintyData
+  globalPosition = positionData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
     var features = mapData.features; 
 
   if (currMouseover != null) {displayData(currMouseover)}
     // Draw each province as a path
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
+    .style('fill', function(d){return fillFn(d);})
   });
 
   mapLayer.selectAll('circle').remove()
@@ -404,6 +422,8 @@ function updateMap(data, uncertaintyData, positionData){
         .attr("cy", function(d){return positionData[d]['point'][1]})
         .attr("r", "4px")
         .attr("fill", function(d){return positionData[d]['type'] == 'mobile' ? "yellow" : "blue"})
+        .on("mouseover", d => sensorTooltip(d))
+        .on("mouseout", d => tooltipOut(d))
     }
 }
 
@@ -454,10 +474,6 @@ function clicked(d) {
     centered = null;
   }
 
-  // Highlight the clicked province
-  mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
-
   // Zoom
   g.transition()
     .duration(750)
@@ -468,6 +484,15 @@ d3.selection.prototype.moveToFront = function() {
   return this.each(function(){
     this.parentNode.appendChild(this);
   });
+};
+
+d3.selection.prototype.moveToBack = function() {
+    return this.each(function() {
+        var firstChild = this.parentNode.firstChild;
+        if (firstChild) {
+            this.parentNode.insertBefore(this, firstChild);
+        }
+    });
 };
 
 function mouseover(d){
@@ -489,13 +514,14 @@ function mouseout(d){
 
   // Reset province color
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+    .style('fill', function(d){return fillFn(d);});
 
   currMouseover = null
   // Clear province name
   bigText.text('');
   radiationText.text('');
   uncertaintyText.text('');
+  d3.select(this).moveToBack();
 }
 
 
@@ -529,13 +555,37 @@ var FONTS = [
 ];
 
 function sensorTooltip(d) {
-  console.log("yee")
-  tooltip
-    .attr("x", d.position[0])
-    .attr("y", d.position[1])
-    .text("hello!")
+  tooltip1
+    .attr("x", globalPosition[d].point[0])
+    .attr("y", globalPosition[d].point[1] - 45 )
+    .text("Sensor Id: " + globalPosition[d].id)
 
-  console.log("hello")
+  tooltip2
+    .attr("x", globalPosition[d].point[0])
+    .attr("y", globalPosition[d].point[1] - 25)
+    .text("Sensor type: " + globalPosition[d].type)
+
+  uncertaintyFloat = Math.round(globalPosition[d].uncertainty * 1000) / 1000
+
+  tooltip3
+    .attr("x", globalPosition[d].point[0])
+    .attr("y", globalPosition[d].point[1] - 5)
+    .text("Uncertainty: " + uncertaintyFloat)
+
+  tooltipRect
+    .attr("x", globalPosition[d].point[0])
+    .attr("y", globalPosition[d].point[1] - 60)
+    .attr("opacity", 1)
+
+}
+
+function tooltipOut(d) {
+  tooltip1.text('')
+  tooltip2.text('')
+  tooltip3.text('')
+
+  tooltipRect
+    .attr("opacity", 0)
 }
 
 function textArt(text){
