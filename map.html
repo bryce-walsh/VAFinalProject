@@ -116,6 +116,18 @@ path {
   cursor: pointer;
 }    
 
+.stop-left {
+    stop-color: #00ff00;  /* Indigo */
+}
+
+.stop-right {
+    stop-color: #ff0000;  /* Teal */
+}
+
+.filled {
+    fill: url(#mainGradient);
+}  
+
 p {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -621,6 +633,48 @@ function displayData(text) {
     .text("Uncertainty: " + displayUncertainty)
 }
 
+
+//Add key
+
+// Create the svg:defs element and the main gradient definition.
+var svgDefs = svg.append('defs');
+
+var mainGradient = svgDefs.append('linearGradient')
+    .attr('id', 'mainGradient');
+
+// Create the stops of the main gradient. Each stop will be assigned
+// a class to style the stop using CSS.
+mainGradient.append('stop')
+    .attr('class', 'stop-left')
+    .attr('offset', '0');
+
+mainGradient.append('stop')
+    .attr('class', 'stop-right')
+    .attr('offset', '1');
+
+// Use the gradient to set the shape fill, via CSS.
+svg.append('rect')
+    .classed('filled', true)
+    .attr('x', 20)
+    .attr('y', 525)
+    .attr('width', 300)
+    .attr('height', 50);
+
+svg.append('text')
+  .text('Radiation Level')
+  .attr('x', 120)
+  .attr('y', 520)
+
+svg.append('text')
+  .text('Low')
+  .attr('x', 20)
+  .attr('y', 520)
+
+
+svg.append('text')
+  .text('High')
+  .attr('x', 290)
+  .attr('y', 520)
 </script>
 
 
