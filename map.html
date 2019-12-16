@@ -439,6 +439,7 @@ function convertHex(hex,alpha){
   hex = hex.replace('#','');
 
   a = Math.round(alpha * 255).toString(16);
+  console.log("alpha", a)
 
   return "#" + hex + a;
 }
@@ -453,10 +454,7 @@ function fillFn(d){
       newColor = convertHex(rawColor, opacity)
     }
     else {
-      console.log("hello")
-      newColor = convertHex(rawColor, 0.01)
-      console.log(newColor)
-      console.log(rawColor)
+      newColor = convertHex(rawColor, 0.1)
       console.log(globalUncertainty[nameFn(d)])
     }
   }
