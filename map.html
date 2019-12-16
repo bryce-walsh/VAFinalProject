@@ -232,6 +232,10 @@ var uncertaintyText = g.append('text')
   .attr('x', 20)
   .attr('y', 85)
 
+var tooltip = g.append('text')
+  .attr('x', 0)
+  .attr('y', 0)
+
 var globalData = {}
 var globalUncertainty = {}
 
@@ -310,10 +314,11 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
       mapLayer.selectAll("circle")
         .data(Object.keys(positionData)).enter()
         .append("circle")
-        .attr("cx", function(d){return positionData[d]['point'][0]})
-        .attr("cy", function(d){return positionData[d]['point'][1]})
+        .attr("cx", d => positionData[d]['point'][0])
+        .attr("cy", d => positionData[d]['point'][1])
         .attr("r", "4px")
-        .attr("fill", function(d){return positionData[d]['type'] == 'mobile' ? "yellow" : "blue"})
+        .attr("fill", d => positionData[d]['type'] == 'mobile' ? "yellow" : "blue")
+        .on("mouseover", d => console.log(d))//sensorTooltip(d))
     }
   });
 }
@@ -422,6 +427,7 @@ function mouseover(d){
   textArt(currMouseover);
   displayData(currMouseover);
   updateData(globalTime)
+  d3.select(this).moveToBack();
 
 }
 
@@ -468,6 +474,16 @@ var FONTS = [
   "Bitter",
   "Varela Round"
 ];
+
+function sensorTooltip(d) {
+  console.log("yee")
+  tooltip
+    .attr("x", d.position[0])
+    .attr("y", d.position[1])
+    .text("hello!")
+
+  console.log("hello")
+}
 
 function textArt(text){
   // Use random font

@@ -10,9 +10,8 @@
 	var static_ids = {51: 1, 52: 4, 53: 6, 54: 9, 55: 11, 56: 12, 57: 13, 58: 14, 59: 15}
 	var projection = d3.geo.mercator()
 	  .scale(100000)
-	  // Center the Map in Colombia
 	  .center([-119.85, .1])
-	  .translate([960 / 2, 500 / 2]);
+	  .translate([650 / 2, 600 / 2]);
 
 	var path = d3.geo.path()
 	  .projection(projection);
