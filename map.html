@@ -93,6 +93,8 @@ var moving = false;
 var currentValue = 0;
 var targetValue = 719;
 
+var slider = document.getElementById("myRange");
+
 var playButton = d3.select("#play-button").on("click", function() {
   // Toggle playing boolean
   moving = !moving;
@@ -102,10 +104,21 @@ var playButton = d3.select("#play-button").on("click", function() {
   } else {
     this.innerHTML = "Play";
   }
-  
+
+  if (moving) {
+    animateElements();
+  }
 });
 
-var slider = document.getElementById("myRange");
+function animateElements() {
+  slider.stepUp();
+  output.innerHTML = slider.value;
+  time = slider.value;
+  updateData(slider.value);
+  if (moving) {
+    setTimeout(animateElements, 100);
+  }
+}
 
 
 var output = document.getElementById("demo");
