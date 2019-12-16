@@ -143,7 +143,7 @@ form {
       <svg id="mapclass"></svg>
       <div id="uncertaintyid">
         <form>
-          <input type="checkbox"  onclick="changeUncertainty()"> Toggle uncertainty maps to opacity <br>
+          <input type="checkbox"  onclick="changeUncertainty()"> Alter Opacity Based On Uncertainty <br>
         </form>
       </div>
     </div>
@@ -206,7 +206,7 @@ function animateElements() {
   time = slider.value;
   if (time == 719) {
     moving = false;
-    console.log('ye')
+    console.log('ye');
     d3.select("#play-button").innerHTML = "Play";
   }
   currentDate = calculateDate();
