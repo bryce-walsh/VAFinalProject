@@ -49,7 +49,7 @@ path {
 #play-button {
       position: absolute;
       top: 3px;
-      left: 170px;
+      left: 360px;
       background: #f08080;
       padding-right: 26px;
       border-radius: 3px;
@@ -64,7 +64,37 @@ path {
 
     #play-button:hover {
       background-color: #696969;
-    }    
+    }
+
+.slider {
+  -webkit-appearance: none;
+  width: 30%;
+  height: 5px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%; 
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}    
 
 </style>
 <body>
