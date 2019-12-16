@@ -179,7 +179,6 @@ var playButton = d3.select("#play-button").on("click", function() {
 function animateElements() {
   slider.stepUp();
   time = slider.value;
-  console.log(time);
   if (time == 719) {
     moving = false;
     console.log('ye')
@@ -266,6 +265,10 @@ var uncertaintyText = g.append('text')
   .attr('x', 20)
   .attr('y', 85)
 
+var tooltip = g.append('text')
+  .attr('x', 0)
+  .attr('y', 0)
+
 var globalData = {}
 var globalUncertainty = {}
 
@@ -316,17 +319,22 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
 
     var features = mapData.features;
 
-    maxVal = 0;
-    rawValues = rawValuesFromData(totalRadiation, mapData)
-    stdDev = math.std(rawValues)
-    median = math.median(rawValues)
+    rawValuesRadiation = rawValuesFromData(totalRadiation, mapData)
+    stdDevRad = math.std(rawValuesRadiation)
+    medianRad = math.median(rawValuesRadiation)
+    maxScaleRad = medianRad + .1 * stdDevRad
+
+    rawValuesUncertainty = rawValuesFromData(totalUncertainty, mapData)
+    stdDevUnc = math.std(rawValuesUncertainty)
+    meanUnc = math.mean(rawValuesUncertainty)
+    maxUncertainty = meanUnc + stdDevUnc
 
     maxUncertainty = d3.max(features, function(d) {
       return uncertaintyData[nameFn(d)]
     })
 
     // Update color scale domain based on data
-    color.domain([0, median + .1 * stdDev]);
+    color.domain([0, maxScaleRad]);
 
     // Draw each province as a path
     mapLayer.selectAll('path')
@@ -335,7 +343,6 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
         .attr('d', path)
         .attr('vector-effect', 'non-scaling-stroke')
         .style('fill', fillFn)
-        .style('opacity', opacityFn)
         .on('mouseover', mouseover)
         .on('mouseout', mouseout)
         .on('click', clicked);
@@ -344,10 +351,11 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
       mapLayer.selectAll("circle")
         .data(Object.keys(positionData)).enter()
         .append("circle")
-        .attr("cx", function(d){return positionData[d]['point'][0]})
-        .attr("cy", function(d){return positionData[d]['point'][1]})
+        .attr("cx", d => positionData[d]['point'][0])
+        .attr("cy", d => positionData[d]['point'][1])
         .attr("r", "4px")
-        .attr("fill", function(d){return positionData[d]['type'] == 'mobile' ? "yellow" : "blue"})
+        .attr("fill", d => positionData[d]['type'] == 'mobile' ? "yellow" : "blue")
+        .on("mouseover", d => console.log(d))//sensorTooltip(d))
     }
   });
 }
@@ -372,7 +380,6 @@ function updateMap(data, uncertaintyData, positionData){
     // Draw each province as a path
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
-    .style('opacity', function(d){return opacityFn(d)});
   });
 
   mapLayer.selectAll('circle').remove()
@@ -398,16 +405,23 @@ function nameFn(d){
   return d && d.properties ? d.properties.Nbrhood : null;
 }
 
-// Get province color
-function fillFn(d){
-  return color(globalData[nameFn(d)]);
+function convertHex(hex,alpha){
+  hex = hex.replace('#','');
+
+  a = Math.round(alpha * 255).toString(16);
+
+  return "#" + hex + a;
 }
 
-function opacityFn(d){
+// Get province color
+function fillFn(d){
+  var rawColor = color(globalData[nameFn(d)])
+  var newColor = rawColor
   if (uncertainty) {
-    return 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    opacity = 1 - globalUncertainty[nameFn(d)] / maxUncertainty + .01
+    newColor = convertHex(rawColor, opacity)
   }
-  return 1
+  return newColor;
 }
 
 // When clicked, zoom in
@@ -456,7 +470,6 @@ function mouseover(d){
   textArt(currMouseover);
   displayData(currMouseover);
   updateData(globalTime)
-
 }
 
 function mouseout(d){
@@ -502,6 +515,16 @@ var FONTS = [
   "Bitter",
   "Varela Round"
 ];
+
+function sensorTooltip(d) {
+  console.log("yee")
+  tooltip
+    .attr("x", d.position[0])
+    .attr("y", d.position[1])
+    .text("hello!")
+
+  console.log("hello")
+}
 
 function textArt(text){
   // Use random font

@@ -7,11 +7,11 @@
   <script src="./jquery-3.4.1.js"> </script>
 
 <script>
+	var static_ids = {51: 1, 52: 4, 53: 6, 54: 9, 55: 11, 56: 12, 57: 13, 58: 14, 59: 15}
 	var projection = d3.geo.mercator()
 	  .scale(100000)
-	  // Center the Map in Colombia
 	  .center([-119.85, .1])
-	  .translate([960 / 2, 500 / 2]);
+	  .translate([650 / 2, 600 / 2]);
 
 	var path = d3.geo.path()
 	  .projection(projection);
@@ -45,11 +45,16 @@
 								  		}
 									})
 			    			positions[[k]] = {'point' : point}
+
 			    			if (k <= 50) {
 			    				positions[[k]]['type'] = 'mobile'
+			    				positions[[k]]['uncertainty'] = uncertaintyData["Uncertainty"][k-1]
+			    				positions[[k]]['id'] = k
 			    			}
 			    			else {
 			    				positions[[k]]['type'] = 'static'
+			    				positions[[k]]['uncertainty'] = 0
+			    				positions[[k]]['id'] = static_ids[k]
 			    			}
 			    			if ((bounds[0][1] - 20) < point[1] && (bounds[1][1] + 20) > point[1] &&
 			    				(bounds[0][0] - 20) < point[0] && (bounds[1][0] + 20) > point[0]) {
@@ -69,7 +74,7 @@
 			    			uncertainty[[neighborhood]] = Math.abs(u_calc)
 			    		}
 			    		else {
-			    			uncertainty[[neighborhood]] = 9.845
+			    			uncertainty[[neighborhood]] = 10.414
 			    		}
 			    	}
 			    	final_radiation.push(radiation)
