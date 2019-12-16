@@ -102,7 +102,6 @@ var slider = document.getElementById("myRange");
 var playButton = d3.select("#play-button").on("click", function() {
   // Toggle playing boolean
   moving = !moving;
-  console.log(moving);
   if (moving) {
     this.innerHTML = "Pause";
   } else {
@@ -116,7 +115,7 @@ var playButton = d3.select("#play-button").on("click", function() {
 
 function animateElements() {
   slider.stepUp();
-  output.innerHTML = slider.value;
+  output.innerHTML = totalRadiation[slider.value]['time'];
   time = slider.value;
   updateData(slider.value);
   if (moving) {
@@ -278,7 +277,6 @@ function updateData(time) {
 }
 
 function updateMap(data, uncertaintyData, positionData){
-  console.log("here")
   globalData = data
   globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
