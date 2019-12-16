@@ -96,6 +96,7 @@ path {
   margin-right: 30px;
   margin-left: 43px;
   margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .slider::-webkit-slider-thumb {
@@ -130,7 +131,7 @@ form {
       <svg id="mapclass"></svg>
       <div id="uncertaintyid">
         <form>
-          <input type="checkbox"  onclick="changeUncertainty()"> Uncertainty <br>
+          <input type="checkbox"  onclick="changeUncertainty()"> Toggle uncertainty maps to opacity <br>
         </form>
       </div>
     </div>
@@ -313,6 +314,7 @@ function initData() {
   d3.json("radiation.json", function(d) {
       d3.json("uncertainty.json", function(u) {
         d3.json("position.json", function(p){
+          console.log(p);
           totalUncertainty = JSON.parse(u)
           totalRadiation = JSON.parse(d)
           totalPosition = JSON.parse(p)
@@ -688,6 +690,14 @@ d3.csv("mobileaverage.csv", function(error, data) {
   mobileline.append("g")   
     .attr("class", "y axis")
     .call(yAxis);
+
+  mobileline.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .text("Average Mobile Sensor Radiation");
  
 });
  
@@ -754,6 +764,14 @@ d3.csv("staticaverage.csv", function(error, data) {
   staticline.append("g")   
     .attr("class", "y axis")
     .call(yAxis);
+
+  staticline.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .text("Average Static Sensor Radiation");
  
 });
  
