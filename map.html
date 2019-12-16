@@ -10,6 +10,7 @@
     width: 700px;
     height: 500px;
     position: relative;
+    background-color: red;
 }
 
 .rightdiv{
@@ -51,10 +52,15 @@ path {
 }
 
 .slidecontainer {
-  margin: auto;
+  position: relative;
+}
+#vis {
+  float: left;
+  margin-left: 20px;
+  margin-top: 8px;
 }
 #play-button {
-      float: left;
+      margin-left: 100px;
       top: 3px;
       background: #f08080;
       padding-right: 26px;
@@ -73,12 +79,13 @@ path {
       background-color: #696969;
     }
 #timestring {
+  float: left;
   margin-left: 29%;
 }
 .slider {
   -webkit-appearance: none;
   float: left;
-  width: 80%;
+  width: 540px;
   height: 5px;
   border-radius: 5px;  
   background: #d3d3d3;
@@ -87,7 +94,8 @@ path {
   -webkit-transition: .2s;
   transition: opacity .2s;
   margin-right: 30px;
-  margin-top: 12px;
+  margin-left: 43px;
+  margin-top: 6px;
 }
 
 .slider::-webkit-slider-thumb {
@@ -129,13 +137,17 @@ form {
 
     <div class="rightdiv">
       <div class="slidecontainer">
-        <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
-          <div id="vis">
-            <button id="play-button">Play</button>
-          </div>
+        <div id="playtime">
           <div id="timestring">
             <p>Time: <span id="demo"></span></p>
           </div>
+          <div id="vis">
+            <button id="play-button">Play</button>
+          </div>
+        </div>
+        <div id="slidelevel">
+          <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
+        </div>
       </div>
       <div id="side_graphs"></div>
     </div>
