@@ -46,11 +46,34 @@ path {
   shape-rendering: crispEdges;
 }
 
+#play-button {
+      position: absolute;
+      top: 3px;
+      left: 170px;
+      background: #f08080;
+      padding-right: 26px;
+      border-radius: 3px;
+      border: none;
+      color: white;
+      margin: 0;
+      padding: 0 12px;
+      width: 60px;
+      cursor: pointer;
+      height: 30px;
+    }
+
+    #play-button:hover {
+      background-color: #696969;
+    }    
+
 </style>
 <body>
 
 <div class="slidecontainer">
   <input type="range" min="0" max="719" value="0" class="slider" id="myRange">
+    <div id="vis">
+      <button id="play-button">Play</button>
+    </div>
     <p>Value: <span id="demo"></span></p>
 </div>
 
@@ -66,12 +89,42 @@ path {
 <script src="https://unpkg.com/mathjs@6.2.5/dist/math.min.js"></script>
 
 <script>
+var moving = false;
+var currentValue = 0;
+var targetValue = 719;
 
 var totalUncertainty = []
 var totalRadiation = []
 var totalPosition = []
 
 var slider = document.getElementById("myRange");
+
+var playButton = d3.select("#play-button").on("click", function() {
+  // Toggle playing boolean
+  moving = !moving;
+  console.log(moving);
+  if (moving) {
+    this.innerHTML = "Pause";
+  } else {
+    this.innerHTML = "Play";
+  }
+
+  if (moving) {
+    animateElements();
+  }
+});
+
+function animateElements() {
+  slider.stepUp();
+  output.innerHTML = slider.value;
+  time = slider.value;
+  updateData(slider.value);
+  if (moving) {
+    setTimeout(animateElements, 100);
+  }
+}
+
+
 var output = document.getElementById("demo");
 output.innerHTML = slider.value; // Display the default slider value
 
@@ -543,7 +596,6 @@ var mobileline = d3.select("#side_graphs")
 d3.csv("mobileaverage.csv", function(error, data) {
   data.forEach(function(d) {
     d.timestamp = new Date(d.timestamp);
-    console.log(d.timestamp);
     d.Average = +d.Average;
   });
  
@@ -610,7 +662,6 @@ var staticline = d3.select("#side_graphs")
 d3.csv("staticaverage.csv", function(error, data) {
   data.forEach(function(d) {
     d.timestamp = new Date(d.timestamp);
-    console.log(d.timestamp);
     d.Average = +d.Average;
   });
  
