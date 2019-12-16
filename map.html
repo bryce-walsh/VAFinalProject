@@ -14,10 +14,6 @@
   stroke: #aaa;
 }
 
-.effect-layer{
-  pointer-events:none;
-}
-
 text{
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 300;
@@ -26,10 +22,6 @@ text{
 text.big-text{
   font-size: 30px;
   font-weight: 400;
-}
-
-.effect-layer text, text.dummy-text{
-  font-size: 12px;
 }
 
 path { 
@@ -139,7 +131,6 @@ var slider = document.getElementById("myRange");
 var playButton = d3.select("#play-button").on("click", function() {
   // Toggle playing boolean
   moving = !moving;
-  console.log(moving);
   if (moving) {
     this.innerHTML = "Pause";
   } else {
@@ -225,26 +216,28 @@ rect = svg.append('rect')
 
 var g = svg.append('g');
 
-var effectLayer = g.append('g')
-  .classed('effect-layer', true);
-
 var mapLayer = g.append('g')
   .classed('map-layer', true);
-
-var dummyText = g.append('text')
-  .classed('dummy-text', true)
-  .attr('x', 10)
-  .attr('y', 30)
-  .style('opacity', 0);
 
 var bigText = g.append('text')
   .classed('big-text', true)
   .attr('x', 20)
   .attr('y', 45);
 
+var radiationText = g.append('text')
+  .attr('x', 20)
+  .attr('y', 70)
+
+var uncertaintyText = g.append('text')
+  .attr('x', 20)
+  .attr('y', 85)
+
 var globalData = {}
 var globalUncertainty = {}
 
+var currMouseover = null
+
+var globalTime = 0
 
 var uncertainty = false
 
@@ -259,9 +252,9 @@ function initData() {
           totalUncertainty = JSON.parse(u)
           totalRadiation = JSON.parse(d)
           totalPosition = JSON.parse(p)
-          var uncertaintyData = totalUncertainty[time]
-          var data = totalRadiation[time];
-          var positionData = totalPosition[time]
+          var uncertaintyData = totalUncertainty[globalTime]
+          var data = totalRadiation[globalTime];
+          var positionData = totalPosition[globalTime]
           drawMap(data, uncertaintyData, positionData, totalRadiation)
         })
       });
@@ -328,19 +321,20 @@ function drawMap(data, uncertaintyData, positionData, totalRadiation) {
 //Read in radiation data and parse into a javascript object where the neighborhoods are the keys and the values are the values
 //Calls drawMap after processing is complete
 function updateData(time) {
-  var uncertaintyData = totalUncertainty[time]
+  globalTime = time;
+  var uncertaintyData = totalUncertainty[time];
   var data = totalRadiation[time];
-  var positionData  = totalPosition[time]
+  var positionData  = totalPosition[time];
   updateMap(data, uncertaintyData, positionData)
 }
 
 function updateMap(data, uncertaintyData, positionData){
-  console.log("here")
   globalData = data
   globalUncertainty = uncertaintyData
   var geoJson = d3.json('StHimarkGeo.json', function(error, mapData) {
     var features = mapData.features; 
 
+  if (currMouseover != null) {displayData(currMouseover)}
     // Draw each province as a path
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
@@ -410,31 +404,41 @@ function clicked(d) {
     .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')scale(' + k + ')translate(' + -x + ',' + -y + ')');
 }
 
+d3.selection.prototype.moveToFront = function() {
+  return this.each(function(){
+    this.parentNode.appendChild(this);
+  });
+};
+
 function mouseover(d){
   // Highlight hovered province
-  d3.select(this).style('fill', 'orange');
+  //d3.select(this).style('fill', 'orange');
+  d3.select(this).moveToFront();
+  d3.select(this).style("stroke", "blue");
+
+  currMouseover = nameFn(d)
 
   // Draw effects
-  textArt(nameFn(d));
+  textArt(currMouseover);
+  displayData(currMouseover);
+  updateData(globalTime)
+
 }
 
 function mouseout(d){
+  d3.select(this).style("stroke", "steelblue");
+
   // Reset province color
   mapLayer.selectAll('path')
     .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
 
-  // Remove effect text
-  effectLayer.selectAll('text').transition()
-    .style('opacity', 0)
-    .remove();
-
+  currMouseover = null
   // Clear province name
   bigText.text('');
+  radiationText.text('');
+  uncertaintyText.text('');
 }
 
-// Gimmick
-// Just me playing around.
-// You won't need this for a regular map.
 
 var BASE_FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
@@ -473,75 +477,30 @@ function textArt(text){
   bigText
     .style('font-family', fontFamily)
     .text(text);
+
+}
+
+function displayData(text) {
+  var fontIndex = Math.round(Math.random() * FONTS.length);
+  var fontFamily = FONTS[fontIndex] + ', ' + BASE_FONT;
+
+  var radiation = globalData[text]
+  var uncertainty = globalUncertainty[text]
+
+  var displayRadiation = radiation != null ? radiation.toFixed(2) : "No Data"
+  var displayUncertainty = uncertainty != null ? uncertainty.toFixed(2) : "No Data"
+
+  radiationText
+    .style('fontFamily', fontFamily)
+    .text("Radiation Level: " + displayRadiation)
+
+  uncertaintyText
+    .style('fontFamily', fontFamily)
+    .text("Uncertainty: " + displayUncertainty)
 }
 
 </script>
 
-
-<script>
-  var margin = {top: 20, right: 20, bottom: 30, left: 40},
-    width = 600 - margin.left - margin.right,
-    height = 270 - margin.top - margin.bottom;
-
-var x = d3.scale.linear()
-    .range([0, width]);
-
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-var z = d3.scale.category10();
-
-var svg = d3.select("#side_graphs").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-d3.csv("testscatter.csv", function(error, data) {
-  if (error) throw error;
-
-  // Compute the series names ("y1", "y2", etc.) from the loaded CSV.
-  var seriesNames = d3.keys(data[0])
-      .filter(function(d) { return d !== "x"; })
-      .sort();
-
-  // Map the data to an array of arrays of {x, y} tuples.
-  var series = seriesNames.map(function(series) {
-    return data.map(function(d) {
-      return {x: +d.x, y: +d[series]};
-    });
-  });
-
-  // Compute the scales’ domains.
-  x.domain(d3.extent(d3.merge(series), function(d) { return d.x; })).nice();
-  y.domain(d3.extent(d3.merge(series), function(d) { return d.y; })).nice();
-
-  // Add the x-axis.
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.svg.axis().scale(x).orient("bottom"));
-
-  // Add the y-axis.
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(d3.svg.axis().scale(y).orient("left"));
-
-  // Add the points!
-  svg.selectAll(".series")
-      .data(series)
-    .enter().append("g")
-      .attr("class", "series")
-      .style("fill", function(d, i) { return z(i); })
-    .selectAll(".point")
-      .data(function(d) { return d; })
-    .enter().append("circle")
-      .attr("class", "point")
-      .attr("r", 4.5)
-      .attr("cx", function(d) { return x(d.x); })
-      .attr("cy", function(d) { return y(d.y); });
-});
-</script>
 
 
 <!-- Mobile Average Line Graph -->
