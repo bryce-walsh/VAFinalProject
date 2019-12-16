@@ -345,7 +345,7 @@ function updateMap(data, uncertaintyData, positionData){
   if (currMouseover != null) {displayData(currMouseover)}
     // Draw each province as a path
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);})
+    .style('fill', function(d){return fillFn(d);})
   });
 
   mapLayer.selectAll('circle').remove()
@@ -408,10 +408,6 @@ function clicked(d) {
     centered = null;
   }
 
-  // Highlight the clicked province
-  mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
-
   // Zoom
   g.transition()
     .duration(750)
@@ -443,7 +439,7 @@ function mouseout(d){
 
   // Reset province color
   mapLayer.selectAll('path')
-    .style('fill', function(d){return centered && d===centered ? '#D5708B' : fillFn(d);});
+    .style('fill', function(d){return fillFn(d);});
 
   currMouseover = null
   // Clear province name
