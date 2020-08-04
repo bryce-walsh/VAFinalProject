@@ -9,6 +9,7 @@ Information on the VAST challenge 2019: https://vast-challenge.github.io/2019/ov
 Information on the specific mini-challenge we endeavored to solve: https://vast-challenge.github.io/2019/MC2.html
 
 ## Description of the Dashboard
+A live demo of the dashboard is available at: https://bryce-walsh.github.io/VAFinalProject/map.html
 Our system is divided into two views. On the left is a map of St. Himark where the color
 of each neighborhood maps to the estimated average radiation level of that neighborhood
 (Green=Low, Red=High). There is a checkbox on the lower left that toggles whether the map
