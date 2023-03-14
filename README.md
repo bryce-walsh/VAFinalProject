@@ -1,5 +1,9 @@
 # VAFinalProject
 
+## Update 
+
+If you are a recruiter or hiring manager looking at this from the link on my resume, please know that I am now aware that red-green is not a good choice for a color scale. This was not covered in the class for which this vizualization was made but if I were to redo it now I would choose a more accessible color palate - just haven't had the chance to go back and update it yet :) 
+
 ## Background 
 
 This project is a Visual Analytics Dashboard created by Bryce Walsh, Nikhil Bhatia-Lin, and Charlie Caron for the Visual Analytics course at Tufts University in the Fall of 2020. The goal of the project was to build a dashboard to solve one of the mini challenges that were part of the VAST challenge held at the VAST conference in 2019.
